@@ -53,6 +53,17 @@ shopt -s nullglob
 TEXTFORMAT=("$FFTOOLS"/textformat/*.o)
 COMMON=("$FFTOOLS/cmdutils.o" "$FFTOOLS/opt_common.o")
 
+# The ffmpeg tool also links the compat objects configure selected (fftools/Makefile:
+# OBJS-ffmpeg += $(COMPAT_OBJS:%=compat/%)), e.g. android/binder.o when MediaCodec is on.
+# In the app's engine process the binder thread pool already runs; starting it again is a
+# no-op.
+BUILD_DIR="$ROOT/build/$ABI/ffmpeg"
+COMPAT=()
+for obj in $(sed -n 's/^COMPAT_OBJS=//p' "$BUILD_DIR/ffbuild/config.mak"); do
+  COMPAT+=("$BUILD_DIR/compat/$obj")
+done
+
 link_tool ffmpeg "${COMMON[@]}" "$FFTOOLS"/ffmpeg_*.o "$FFTOOLS/sync_queue.o" \
-  "$FFTOOLS/thread_queue.o" "$FFTOOLS"/graph/*.o "$FFTOOLS"/resources/*.o "${TEXTFORMAT[@]}"
+  "$FFTOOLS/thread_queue.o" "$FFTOOLS"/graph/*.o "$FFTOOLS"/resources/*.o "${TEXTFORMAT[@]}" \
+  "${COMPAT[@]}"
 link_tool ffprobe "${COMMON[@]}" "${TEXTFORMAT[@]}"

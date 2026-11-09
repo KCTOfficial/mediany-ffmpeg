@@ -19,7 +19,7 @@ FF_DEMUXERS=(
 FF_MUXERS=(
   mp4 mov ipod matroska webm tgp
   mp3 adts flac wav ogg opus
-  image2pipe gif webp apng
+  image2pipe gif webp apng avif
   srt ass webvtt
 )
 
@@ -64,7 +64,7 @@ FF_FILTERS=(
   # Plumbing
   null anull copy format aformat setpts asetpts split asplit trim atrim fps
   # Video
-  scale transpose hflip vflip crop pad rotate setsar setdar palettegen paletteuse
+  scale transpose hflip vflip crop pad rotate setsar setdar palettegen paletteuse color overlay
   # Audio
   aresample atempo volume loudnorm afade
 )

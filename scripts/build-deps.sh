@@ -46,6 +46,8 @@ CMAKE_ANDROID=(
   -DCMAKE_BUILD_TYPE=Release
   -DCMAKE_INSTALL_PREFIX="$DEPS"
   -DCMAKE_PREFIX_PATH="$DEPS"
+  # The NDK toolchain only searches its sysroot; also search the libraries built here.
+  -DCMAKE_FIND_ROOT_PATH="$DEPS"
   -DCMAKE_INSTALL_LIBDIR=lib
   -DBUILD_SHARED_LIBS=OFF
   -DCMAKE_POSITION_INDEPENDENT_CODE=ON
@@ -60,11 +62,13 @@ fetch() {
   file="$DOWNLOADS/$(basename "$url")"
   [[ -f "$file" ]] || curl -fsSL --retry 3 -o "$file" "$url"
   echo "$sha  $file" | sha256sum -c - >&2
-  local dir
-  dir="$WORK/$(tar -tf "$file" | head -1 | cut -d/ -f1)"
-  rm -rf "$dir"
-  tar -xf "$file" -C "$WORK"
-  echo "$dir"
+  # Extract into a fresh directory and return the archive's single top-level directory.
+  local out
+  out="$(mktemp -d -p "$WORK")"
+  tar -xf "$file" -C "$out"
+  local dirs=("$out"/*)
+  [[ ${#dirs[@]} -eq 1 && -d "${dirs[0]}" ]] || { echo "Unexpected layout in $file" >&2; exit 1; }
+  echo "${dirs[0]}"
 }
 
 cmake_install() {
@@ -83,7 +87,7 @@ build_ogg() {
 build_vorbis() {
   local src
   src="$(fetch "https://downloads.xiph.org/releases/vorbis/libvorbis-$VORBIS_VERSION.tar.xz" "$VORBIS_SHA256")"
-  cmake_install "$src" -DBUILD_TESTING=OFF
+  cmake_install "$src" -DBUILD_TESTING=OFF     -DOGG_INCLUDE_DIR="$DEPS/include" -DOGG_LIBRARY="$DEPS/lib/libogg.a"
 }
 
 build_opus() {

@@ -42,7 +42,9 @@ jobs:
 
       - name: Install Android NDK ${{ env.NDK_VERSION }}
         run: |
-          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "ndk;${NDK_VERSION}" > /dev/null
+          # Not `yes |`: with pipefail, yes's SIGPIPE would fail the step.
+          echo y | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "ndk;${NDK_VERSION}" > /dev/null
+          test -d "$ANDROID_HOME/ndk/${NDK_VERSION}"
           echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/${NDK_VERSION}" >> "$GITHUB_ENV"
 
       - name: Cache FFmpeg source tarball

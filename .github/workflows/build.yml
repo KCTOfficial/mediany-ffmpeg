@@ -56,10 +56,10 @@ jobs:
 
       - name: Build codec libraries
         if: steps.deps-cache.outputs.cache-hit != 'true'
-        run: bash scripts/build-deps.sh "${{ matrix.abi }}"
+        run: bash scripts/build-deps.sh "${{ matrix.abi }}" 2>&1 | tee build-log.txt
 
       - name: Build FFmpeg
-        run: bash scripts/build-ffmpeg.sh "${{ matrix.abi }}"
+        run: bash scripts/build-ffmpeg.sh "${{ matrix.abi }}" 2>&1 | tee build-log.txt
 
       - name: Check license (LGPL v2.1+ only)
         run: bash scripts/check-license.sh "out/${{ matrix.abi }}/config.h"
@@ -67,10 +67,24 @@ jobs:
       - name: Check 16 KB alignment
         run: bash scripts/check-alignment.sh "out/${{ matrix.abi }}"
 
+      # Workflow logs need a sign-in to download, but annotations are public: report the end
+      # of the failing build log (and FFmpeg's configure log) as error annotations.
+      - name: Report build failure
+        if: failure()
+        run: |
+          report() {
+            [[ -f "$1" ]] || return 0
+            local text
+            text="$(tail -n "$2" "$1" | cut -c1-300 | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}')"
+            echo "::error title=$3 (${{ matrix.abi }})::${text}"
+          }
+          report build-log.txt 60 "Build log tail"
+          report "build/${{ matrix.abi }}/ffmpeg/ffbuild/config.log" 40 "FFmpeg config.log tail"
+
       - name: Size report
         run: |
           {
-            echo "### FFmpeg ${FFMPEG_VERSION} - ${{ matrix.abi }} (stripped)"
+            echo "### FFmpeg ${FFMPEG_VERSION} - ${{ matrix.abi }}"
             echo '```'
             du -b out/${{ matrix.abi }}/lib/*.so out/${{ matrix.abi }}/bin/*
             echo "TOTAL lib/*.so: $(du -cb out/${{ matrix.abi }}/lib/*.so | tail -1 | cut -f1) bytes"

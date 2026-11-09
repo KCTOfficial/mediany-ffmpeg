@@ -47,13 +47,36 @@ cat > "$DIST/components.json" <<EOF
 {
   "build": "${TAG}",
   "components": [
-    {
-      "name": "FFmpeg",
-      "version": "${FFMPEG_VERSION}",
-      "license": "LGPL-2.1-or-later",
+    { "name": "FFmpeg", "version": "${FFMPEG_VERSION}", "license": "LGPL-2.1-or-later",
       "url": "https://ffmpeg.org",
-      "source": "https://ffmpeg.org/releases/ffmpeg-${FFMPEG_VERSION}.tar.xz"
-    }
+      "source": "https://ffmpeg.org/releases/ffmpeg-${FFMPEG_VERSION}.tar.xz" },
+    { "name": "LAME", "version": "${LAME_VERSION}", "license": "LGPL-2.0-or-later",
+      "url": "https://lame.sourceforge.io",
+      "source": "https://downloads.sourceforge.net/project/lame/lame/${LAME_VERSION}/lame-${LAME_VERSION}.tar.gz" },
+    { "name": "libogg", "version": "${OGG_VERSION}", "license": "BSD-3-Clause",
+      "url": "https://xiph.org/ogg/",
+      "source": "https://downloads.xiph.org/releases/ogg/libogg-${OGG_VERSION}.tar.xz" },
+    { "name": "libvorbis", "version": "${VORBIS_VERSION}", "license": "BSD-3-Clause",
+      "url": "https://xiph.org/vorbis/",
+      "source": "https://downloads.xiph.org/releases/vorbis/libvorbis-${VORBIS_VERSION}.tar.xz" },
+    { "name": "Opus", "version": "${OPUS_VERSION}", "license": "BSD-3-Clause",
+      "url": "https://opus-codec.org",
+      "source": "https://downloads.xiph.org/releases/opus/opus-${OPUS_VERSION}.tar.gz" },
+    { "name": "libvpx", "version": "${VPX_VERSION}", "license": "BSD-3-Clause",
+      "url": "https://chromium.googlesource.com/webm/libvpx",
+      "source": "https://chromium.googlesource.com/webm/libvpx/+/${VPX_COMMIT}" },
+    { "name": "dav1d", "version": "${DAV1D_VERSION}", "license": "BSD-2-Clause",
+      "url": "https://code.videolan.org/videolan/dav1d",
+      "source": "https://downloads.videolan.org/pub/videolan/dav1d/${DAV1D_VERSION}/dav1d-${DAV1D_VERSION}.tar.xz" },
+    { "name": "libaom", "version": "${AOM_VERSION}", "license": "BSD-2-Clause",
+      "url": "https://aomedia.googlesource.com/aom",
+      "source": "https://storage.googleapis.com/aom-releases/libaom-${AOM_VERSION}.tar.gz" },
+    { "name": "libwebp", "version": "${WEBP_VERSION}", "license": "BSD-3-Clause",
+      "url": "https://developers.google.com/speed/webp",
+      "source": "https://storage.googleapis.com/downloads.webmproject.org/releases/webp/libwebp-${WEBP_VERSION}.tar.gz" },
+    { "name": "SoX Resampler (soxr)", "version": "${SOXR_VERSION}", "license": "LGPL-2.1-or-later",
+      "url": "https://sourceforge.net/projects/soxr/",
+      "source": "https://downloads.sourceforge.net/project/soxr/soxr-${SOXR_VERSION}-Source.tar.xz" }
   ]
 }
 EOF

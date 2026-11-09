@@ -14,9 +14,34 @@ License (LGPL) v2.1. Mediany uses code of FFmpeg licensed under the LGPLv2.1.
 | License | LGPL version 2.1 or later. GPL, nonfree, and version3 components are never enabled, and CI fails if they are. |
 | ABIs | `arm64-v8a`, `x86_64` |
 | Android | NDK r28c (28.2.13676358), API level 26 |
-| Linking | Shared libraries (`lib*.so`), 16 KB page aligned |
+| Linking | Shared libraries (`lib*.so`), 16 KB page aligned, symbol tables kept |
+| Components | `--disable-everything`, then only the allowlist in `scripts/components.sh` |
+| I/O | Protocols `fd` and `pipe` only. Network disabled (`--disable-network`) |
 | Hardware codecs | Android MediaCodec (`--enable-jni --enable-mediacodec`) |
-| Network | Disabled (`--disable-network`) |
+
+### External codec libraries
+
+Built by `scripts/build-deps.sh` as static, position-independent libraries and linked into
+the FFmpeg shared libraries. Versions and checksums are pinned in `versions.env`.
+
+| Library | Used for | License |
+|---|---|---|
+| LAME | MP3 encoding | LGPL-2.0-or-later |
+| libogg, libvorbis | Vorbis encoding | BSD-3-Clause |
+| Opus | Opus encoding | BSD-3-Clause |
+| libvpx | VP8/VP9 encoding | BSD-3-Clause |
+| dav1d | AV1 decoding | BSD-2-Clause |
+| libaom | AV1 and AVIF encoding | BSD-2-Clause |
+| libwebp | WebP encoding | BSD-3-Clause |
+| SoX Resampler (soxr) | High-quality audio resampling | LGPL-2.1-or-later |
+
+### Command-line tools as libraries
+
+`scripts/link-fftools.sh` links the unmodified `ffmpeg` and `ffprobe` tools into
+`libmediany_ffmpeg.so` and `libmediany_ffprobe.so`, exporting only
+`mediany_ffmpeg_main` and `mediany_ffprobe_main` (the tools' `main`, renamed with
+`objcopy`). The tools keep global state, so an app must run at most one invocation per
+process.
 
 The full configure command is in `scripts/build-ffmpeg.sh`.
 
@@ -24,11 +49,12 @@ The full configure command is in `scripts/build-ffmpeg.sh`.
 
 Builds run on GitHub Actions (`.github/workflows/build.yml`). Each run:
 
-1. Downloads the pinned FFmpeg tarball and verifies its SHA-256.
-2. Cross-compiles FFmpeg for each ABI with the pinned NDK.
-3. Fails unless the configuration is LGPL v2.1+ (`scripts/check-license.sh`).
-4. Fails unless every ELF file is 16 KB aligned (`scripts/check-alignment.sh`).
-5. Publishes the libraries, headers, and a size report as workflow artifacts.
+1. Builds the codec libraries (cached until `versions.env` or `build-deps.sh` changes).
+2. Downloads the pinned FFmpeg tarball and verifies its SHA-256.
+3. Cross-compiles FFmpeg for each ABI with the pinned NDK and links the tool libraries.
+4. Fails unless the configuration is LGPL v2.1+ (`scripts/check-license.sh`).
+5. Fails unless every ELF file is 16 KB aligned (`scripts/check-alignment.sh`).
+6. Publishes the libraries, headers, and a size report as workflow artifacts.
 
 ## Releases
 
@@ -48,6 +74,7 @@ To build locally on Linux (x86_64):
 
 ```bash
 export ANDROID_NDK_HOME=/path/to/android-ndk-r28c
+bash scripts/build-deps.sh arm64-v8a
 bash scripts/build-ffmpeg.sh arm64-v8a
 bash scripts/check-license.sh out/arm64-v8a/config.h
 bash scripts/check-alignment.sh out/arm64-v8a
@@ -55,4 +82,5 @@ bash scripts/check-alignment.sh out/arm64-v8a
 
 ## Modifications to FFmpeg
 
-None yet. Any patch applied to the FFmpeg source will be listed here and kept in `patches/`.
+None. The FFmpeg source is used unmodified; the tool libraries only rename `main` in the
+compiled object files. Any future patch will be listed here and kept in `patches/`.

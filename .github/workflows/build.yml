@@ -1,0 +1,72 @@
+name: build-ffmpeg
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: FFmpeg ${{ matrix.abi }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        abi: [arm64-v8a, x86_64]
+    steps:
+      # TODO(security): pin third-party actions to full commit SHAs before the first release.
+      - uses: actions/checkout@v4
+
+      - name: Load pinned versions
+        run: grep -E '^[A-Z0-9_]+=' versions.env >> "$GITHUB_ENV"
+
+      - name: Install host tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends nasm make
+
+      - name: Install Android NDK ${{ env.NDK_VERSION }}
+        run: |
+          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "ndk;${NDK_VERSION}" > /dev/null
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/${NDK_VERSION}" >> "$GITHUB_ENV"
+
+      - name: Cache FFmpeg source tarball
+        uses: actions/cache@v4
+        with:
+          path: build/ffmpeg-${{ env.FFMPEG_VERSION }}.tar.xz
+          key: ffmpeg-src-${{ env.FFMPEG_VERSION }}-${{ env.FFMPEG_SHA256 }}
+
+      - name: Build
+        run: bash scripts/build-ffmpeg.sh "${{ matrix.abi }}"
+
+      - name: Check license (LGPL v2.1+ only)
+        run: bash scripts/check-license.sh "out/${{ matrix.abi }}/config.h"
+
+      - name: Check 16 KB alignment
+        run: bash scripts/check-alignment.sh "out/${{ matrix.abi }}"
+
+      - name: Size report
+        run: |
+          {
+            echo "### FFmpeg ${FFMPEG_VERSION} - ${{ matrix.abi }} (stripped)"
+            echo '```'
+            du -b out/${{ matrix.abi }}/lib/*.so out/${{ matrix.abi }}/bin/*
+            echo "TOTAL lib/*.so: $(du -cb out/${{ matrix.abi }}/lib/*.so | tail -1 | cut -f1) bytes"
+            echo '```'
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload build
+        uses: actions/upload-artifact@v4
+        with:
+          name: ffmpeg-${{ env.FFMPEG_VERSION }}-${{ matrix.abi }}
+          path: out/${{ matrix.abi }}
+          if-no-files-found: error

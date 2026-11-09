@@ -30,6 +30,20 @@ Builds run on GitHub Actions (`.github/workflows/build.yml`). Each run:
 4. Fails unless every ELF file is 16 KB aligned (`scripts/check-alignment.sh`).
 5. Publishes the libraries, headers, and a size report as workflow artifacts.
 
+## Releases
+
+Pushing a tag `v<FFmpeg version>-<build number>` (for example `v8.1.3-1`) builds and publishes
+a GitHub release with:
+
+| Asset | Contents |
+|---|---|
+| `ffmpeg-<version>-android-<abi>.tar.gz` | Shared libraries (`lib/`), `ffmpeg`/`ffprobe` for on-device tests (`bin/`), `config.h` |
+| `ffmpeg-<version>-android-headers.tar.gz` | C headers (`include/`) |
+| `ffmpeg-<version>.tar.xz` | The exact FFmpeg source used |
+| `mediany-ffmpeg-<tag>-build-scripts.tar.gz` | This repository at the tag |
+| `components.json` | Component names, versions, and licenses |
+| `SHA256SUMS` | Checksums of all assets |
+
 To build locally on Linux (x86_64):
 
 ```bash

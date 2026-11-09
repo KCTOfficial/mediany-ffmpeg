@@ -3,6 +3,7 @@ name: build-ffmpeg
 on:
   push:
     branches: [main]
+    tags: ['v*']
   pull_request:
   workflow_dispatch:
 
@@ -70,3 +71,41 @@ jobs:
           name: ffmpeg-${{ env.FFMPEG_VERSION }}-${{ matrix.abi }}
           path: out/${{ matrix.abi }}
           if-no-files-found: error
+
+  release:
+    name: Publish release
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Load pinned versions
+        run: grep -E '^[A-Z0-9_]+=' versions.env >> "$GITHUB_ENV"
+
+      - name: Check tag matches the pinned FFmpeg version
+        run: |
+          case "$GITHUB_REF_NAME" in
+            "v${FFMPEG_VERSION}-"*) ;;
+            *) echo "Tag $GITHUB_REF_NAME must be v${FFMPEG_VERSION}-<build number>" >&2; exit 1 ;;
+          esac
+
+      - name: Download build outputs
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Package release assets
+        run: bash scripts/package-release.sh "$GITHUB_REF_NAME"
+
+      - name: Create GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" dist/* \
+            --verify-tag \
+            --title "FFmpeg ${FFMPEG_VERSION} for Android (${GITHUB_REF_NAME})" \
+            --notes-file RELEASE_NOTES.md

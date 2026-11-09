@@ -1,2 +1,5 @@
 /build/
 /out/
+/dist/
+/artifacts/
+/RELEASE_NOTES.md

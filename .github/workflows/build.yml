@@ -122,10 +122,34 @@ jobs:
           path: out/${{ matrix.abi }}
           if-no-files-found: error
 
+  # Proves the license and alignment guards fail on a GPL/nonfree/v3 config and on 4 KB
+  # alignment, and pass compliant input.
+  guards:
+    name: Guard self-test
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Load pinned versions
+        run: grep -E '^[A-Z0-9_]+=' versions.env >> "$GITHUB_ENV"
+
+      - name: Install Android NDK ${{ env.NDK_VERSION }}
+        run: |
+          echo y | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "ndk;${NDK_VERSION}" > /dev/null
+          test -d "$ANDROID_HOME/ndk/${NDK_VERSION}"
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/${NDK_VERSION}" >> "$GITHUB_ENV"
+
+      - name: Run guard self-test
+        run: bash scripts/test-guards.sh
+
   release:
     name: Publish release
     if: startsWith(github.ref, 'refs/tags/v')
-    needs: build
+    needs: [build, guards]
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:

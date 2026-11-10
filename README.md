@@ -56,6 +56,10 @@ Builds run on GitHub Actions (`.github/workflows/build.yml`). Each run:
 5. Fails unless every ELF file is 16 KB aligned (`scripts/check-alignment.sh`).
 6. Publishes the libraries, headers, and a size report as workflow artifacts.
 
+A separate job (`scripts/test-guards.sh`) proves both checks work: they must reject GPL,
+nonfree, and v3 configurations and 4 KB-aligned libraries, and accept compliant ones. Releases
+need it to pass.
+
 ## Releases
 
 Pushing a tag `v<FFmpeg version>-<build number>` (for example `v8.1.3-1`) builds and publishes

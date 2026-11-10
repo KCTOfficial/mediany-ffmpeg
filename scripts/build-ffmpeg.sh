@@ -36,7 +36,9 @@ PREFIX="$ROOT/out/$ABI"
 fetch_source() {
   mkdir -p "$ROOT/build/src"
   if [[ ! -f "$TARBALL" ]]; then
-    curl -fsSL --retry 3 -o "$TARBALL" "https://ffmpeg.org/releases/ffmpeg-$FFMPEG_VERSION.tar.xz"
+    curl -fsSL --retry 5 --retry-all-errors --retry-delay 5 -o "$TARBALL.part" \
+      "https://ffmpeg.org/releases/ffmpeg-$FFMPEG_VERSION.tar.xz"
+    mv "$TARBALL.part" "$TARBALL"
   fi
   # Integrity: the tarball must match the pinned, signature-verified checksum.
   echo "$FFMPEG_SHA256  $TARBALL" | sha256sum -c -

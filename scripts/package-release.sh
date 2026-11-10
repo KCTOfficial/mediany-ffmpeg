@@ -34,7 +34,7 @@ diff -r "$(artifact_dir "${ABIS[0]}")/include" "$(artifact_dir "${ABIS[1]}")/inc
 tar -C "$(artifact_dir "${ABIS[0]}")" -czf "$DIST/${NAME}-headers.tar.gz" include
 
 # 3. Exact FFmpeg source used by this build (LGPL source offer).
-curl -fsSL --retry 3 -o "$DIST/ffmpeg-${FFMPEG_VERSION}.tar.xz" \
+curl -fsSL --retry 5 --retry-all-errors --retry-delay 5 -o "$DIST/ffmpeg-${FFMPEG_VERSION}.tar.xz" \
   "https://ffmpeg.org/releases/ffmpeg-${FFMPEG_VERSION}.tar.xz"
 echo "$FFMPEG_SHA256  $DIST/ffmpeg-${FFMPEG_VERSION}.tar.xz" | sha256sum -c -
 

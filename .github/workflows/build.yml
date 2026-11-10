@@ -53,10 +53,11 @@ jobs:
           path: build/ffmpeg-${{ env.FFMPEG_VERSION }}.tar.xz
           key: ffmpeg-src-${{ env.FFMPEG_VERSION }}-${{ env.FFMPEG_SHA256 }}
 
-      # The codec libraries only change with versions.env or their build script.
-      - name: Cache codec libraries
+      # The codec libraries only change with versions.env or their build script. They are
+      # saved right after they build, so a later failing step does not discard them.
+      - name: Restore codec libraries
         id: deps-cache
-        uses: actions/cache@v4
+        uses: actions/cache/restore@v4
         with:
           path: build/${{ matrix.abi }}/deps
           key: deps-${{ matrix.abi }}-${{ hashFiles('versions.env', 'scripts/build-deps.sh') }}
@@ -64,6 +65,13 @@ jobs:
       - name: Build codec libraries
         if: steps.deps-cache.outputs.cache-hit != 'true'
         run: bash scripts/build-deps.sh "${{ matrix.abi }}" 2>&1 | tee build-log.txt
+
+      - name: Save codec libraries
+        if: steps.deps-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: build/${{ matrix.abi }}/deps
+          key: ${{ steps.deps-cache.outputs.cache-primary-key }}
 
       - name: Build FFmpeg
         run: bash scripts/build-ffmpeg.sh "${{ matrix.abi }}" 2>&1 | tee build-log.txt

@@ -5,6 +5,8 @@
 # Usage: scripts/build-deps.sh <arm64-v8a|x86_64>
 # Requires: ANDROID_NDK_HOME, cmake, ninja, meson, nasm, make, git, curl, sha256sum.
 set -euo pipefail
+# Make failures inside $(...) (such as fetch) stop the script too.
+shopt -s inherit_errexit
 
 ABI="${1:?usage: build-deps.sh <arm64-v8a|x86_64>}"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -60,7 +62,11 @@ CMAKE_ANDROID=(
 fetch() {
   local url="$1" sha="$2" file
   file="$DOWNLOADS/$(basename "$url")"
-  [[ -f "$file" ]] || curl -fsSL --retry 3 -o "$file" "$url"
+  if [[ ! -f "$file" ]]; then
+    # Mirrors drop connections now and then; retry those too, and never keep a partial file.
+    curl -fsSL --retry 5 --retry-all-errors --retry-delay 5 -o "$file.part" "$url"
+    mv "$file.part" "$file"
+  fi
   echo "$sha  $file" | sha256sum -c - >&2
   # Extract into a fresh directory and return the archive's single top-level directory.
   local out

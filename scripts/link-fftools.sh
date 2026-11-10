@@ -33,7 +33,7 @@ WORK="$ROOT/build/$ABI/fftools-link"
 rm -rf "$WORK"
 mkdir -p "$WORK"
 
-FFMPEG_LIBS=(-L"$PREFIX/lib" -lavfilter -lavformat -lavcodec -lswresample -lswscale -lavutil -lm)
+FFMPEG_LIBS=(-L"$PREFIX/lib" -lavfilter -lavformat -lavcodec -lswresample -lswscale -lavutil -lm -ldl)
 LDFLAGS=(-shared -Wl,--no-undefined -Wl,-z,max-page-size=16384 -Wl,-z,relro -Wl,-z,now)
 
 # link_tool <tool> <objects...>

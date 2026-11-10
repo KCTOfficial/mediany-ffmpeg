@@ -79,13 +79,22 @@ jobs:
       - name: Report build failure
         if: failure()
         run: |
+          # Annotations are capped at ~4 KB, so keep only the informative lines.
           report() {
             [[ -f "$1" ]] || return 0
             local text
-            text="$(tail -n "$2" "$1" | cut -c1-300 | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}')"
+            text="$(grep -Ev '^(INSTALL|CC|CXX|AR|AS|LD|STRIP|X86ASM|GEN)[[:space:]]' "$1"               | tail -n "$2" | cut -c1-300 | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}')"
             echo "::error title=$3 (${{ matrix.abi }})::${text}"
           }
-          report build-log.txt 60 "Build log tail"
+          errors() {
+            [[ -f "$1" ]] || return 0
+            local text
+            text="$(grep -iE -A3 'error|undefined' "$1" | grep -v '^INSTALL' | tail -n 30               | cut -c1-300 | sed 's/%/%25/g' | awk '{printf "%s%%0A", $0}')"
+            [[ -n "$text" ]] && echo "::error title=Build errors (${{ matrix.abi }})::${text}"
+            return 0
+          }
+          errors build-log.txt
+          report build-log.txt 40 "Build log tail"
           report "build/${{ matrix.abi }}/ffmpeg/ffbuild/config.log" 40 "FFmpeg config.log tail"
 
       - name: Size report

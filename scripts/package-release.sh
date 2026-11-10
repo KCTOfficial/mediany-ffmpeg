@@ -38,6 +38,18 @@ curl -fsSL --retry 5 --retry-all-errors --retry-delay 5 -o "$DIST/ffmpeg-${FFMPE
   "https://ffmpeg.org/releases/ffmpeg-${FFMPEG_VERSION}.tar.xz"
 echo "$FFMPEG_SHA256  $DIST/ffmpeg-${FFMPEG_VERSION}.tar.xz" | sha256sum -c -
 
+# 3b. Exact sources of the other LGPL libraries linked in (the rest are BSD-style licensed).
+fetch_source() {
+  local url="$1" sha="$2" file
+  file="$DIST/$(basename "$url")"
+  curl -fsSL --retry 5 --retry-all-errors --retry-delay 5 -o "$file" "$url"
+  echo "$sha  $file" | sha256sum -c -
+}
+fetch_source "https://downloads.sourceforge.net/project/lame/lame/${LAME_VERSION}/lame-${LAME_VERSION}.tar.gz" \
+  "$LAME_SHA256"
+fetch_source "https://downloads.sourceforge.net/project/soxr/soxr-${SOXR_VERSION}-Source.tar.xz" \
+  "$SOXR_SHA256"
+
 # 4. Build scripts at this tag.
 git -C "$ROOT" archive --format=tar.gz --prefix="mediany-ffmpeg-${TAG}/" \
   -o "$DIST/mediany-ffmpeg-${TAG}-build-scripts.tar.gz" HEAD
@@ -89,6 +101,8 @@ FFmpeg ${FFMPEG_VERSION} built for Android (${ABIS[*]}), NDK ${NDK_VERSION}, API
 - License: LGPL version 2.1 or later (no GPL, nonfree, or version3 components).
 - Shared libraries, 16 KB page aligned. Network support disabled.
 - \`ffmpeg-${FFMPEG_VERSION}.tar.xz\` is the exact, checksum-verified FFmpeg source used.
+- \`lame-${LAME_VERSION}.tar.gz\` and \`soxr-${SOXR_VERSION}-Source.tar.xz\` are the exact sources of
+  the other LGPL libraries linked in. None of the sources is modified.
 - \`mediany-ffmpeg-${TAG}-build-scripts.tar.gz\` contains the build scripts and configuration.
 - Verify downloads with \`SHA256SUMS\`.
 EOF

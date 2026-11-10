@@ -43,6 +43,11 @@ the FFmpeg shared libraries. Versions and checksums are pinned in `versions.env`
 `objcopy`). The tools keep global state, so an app must run at most one invocation per
 process.
 
+One FFmpeg object is replaced: `compat/android/binder.o` becomes
+`src/android_binder_stub.c`, a no-op. The upstream helper prepares a binder thread pool for
+the command-line `ffmpeg` on Android 15+, and inside an app process (which already has one)
+its `ABinderProcess_setThreadPoolMaxThreadCount` call aborts the process.
+
 The full configure command is in `scripts/build-ffmpeg.sh`.
 
 ## Building

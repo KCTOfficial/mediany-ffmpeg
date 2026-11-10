@@ -54,13 +54,17 @@ TEXTFORMAT=("$FFTOOLS"/textformat/*.o)
 COMMON=("$FFTOOLS/cmdutils.o" "$FFTOOLS/opt_common.o")
 
 # The ffmpeg tool also links the compat objects configure selected (fftools/Makefile:
-# OBJS-ffmpeg += $(COMPAT_OBJS:%=compat/%)), e.g. android/binder.o when MediaCodec is on.
-# In the app's engine process the binder thread pool already runs; starting it again is a
-# no-op.
+# OBJS-ffmpeg += $(COMPAT_OBJS:%=compat/%)), except android/binder.o: its thread pool setup
+# aborts inside an app process, so src/android_binder_stub.c replaces it (see that file).
 BUILD_DIR="$ROOT/build/$ABI/ffmpeg"
 COMPAT=()
 for obj in $(sed -n 's/^COMPAT_OBJS=//p' "$BUILD_DIR/ffbuild/config.mak"); do
-  COMPAT+=("$BUILD_DIR/compat/$obj")
+  if [[ "$obj" == android/binder.o ]]; then
+    "$CC" -c -fPIC -O2 -Wall -Werror -o "$WORK/android_binder_stub.o" "$ROOT/src/android_binder_stub.c"
+    COMPAT+=("$WORK/android_binder_stub.o")
+  else
+    COMPAT+=("$BUILD_DIR/compat/$obj")
+  fi
 done
 
 link_tool ffmpeg "${COMMON[@]}" "$FFTOOLS"/ffmpeg_*.o "$FFTOOLS/sync_queue.o" \

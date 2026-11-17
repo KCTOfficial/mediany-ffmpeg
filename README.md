@@ -50,6 +50,13 @@ its `ABinderProcess_setThreadPoolMaxThreadCount` call aborts the process.
 
 The full configure command is in `scripts/build-ffmpeg.sh`.
 
+### Damage scan
+
+Mediany checks a file for damage by decoding all of it and discarding the result:
+`ffmpeg -i fd: -c:v wrapped_avframe -c:a pcm_s16le -f null -`. The `null` muxer and the
+`wrapped_avframe` encoder exist only for this scan. Both are part of FFmpeg's LGPL code and
+write nothing.
+
 ## Building
 
 Builds run on GitHub Actions (`.github/workflows/build.yml`). Each run:

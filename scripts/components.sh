@@ -21,6 +21,8 @@ FF_MUXERS=(
   mp3 adts flac wav ogg opus
   image2pipe gif webp apng avif
   srt ass webvtt
+  # Damage scan: decode everything and discard the output
+  null
 )
 
 FF_DECODERS=(
@@ -47,6 +49,8 @@ FF_ENCODERS=(
   png mjpeg libwebp libwebp_anim bmp tiff gif apng
   # Subtitles
   subrip srt ass webvtt movtext
+  # Damage scan: passes decoded video frames to the null muxer without encoding
+  wrapped_avframe
 )
 
 FF_PARSERS=(
